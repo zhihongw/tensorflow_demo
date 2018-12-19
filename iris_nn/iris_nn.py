@@ -50,9 +50,26 @@ for i in range(1, (epoch + 1)):
     if i % interval == 0:
         print('Epoch', i, '|', 'Loss:', sess.run(loss, feed_dict={X_data: X_train, y_target: y_train}))
 
-tf.saved_model.simple_save(sess, "./models",
-                           inputs = {"x": X_data },
-                           outputs = {"y": y_target})
+#tf.saved_model.simple_save(sess, "./models",
+#                           inputs = {"x": X_data },
+#                           outputs = {"y": y_target})
+saver_new = tf.train.Saver()
+input_x=tf.saved_model.utils.build_tensor_info(X_data)
+output_y=tf.saved_model.utils.build_tensor_info(y_target)
+
+predict_iris=(
+        tf.saved_model.signature_def_utils.build_signature_def(
+        inputs={'x': input_x},
+        outputs={'y':output_y},
+        method_name=tf.saved_model.signature_constants.CLASSIFY_METHOD_NAME)
+)
+builder=tf.saved_model.builder.SavedModelBuilder("./modelsv2")
+builder.add_meta_graph_and_variables(
+        sess,[tf.saved_model.tag_constants.SERVING],
+        signature_def_map={
+             "predict_iris":predict_iris,
+        })
+builder.save()      
 """
 # Prediction
 print()
