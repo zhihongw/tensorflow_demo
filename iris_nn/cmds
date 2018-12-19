@@ -1,0 +1,3 @@
+ saved_model_cli run --dir modelsv2 --tag_set serve --signature_def predict_iris --input_exprs "x=[[4.4,2.9,1.4,0.2]]"
+ saved_model_cli show --dir modelsv2 --tag_set serve --signature_def predict_iris
+

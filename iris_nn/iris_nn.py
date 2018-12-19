@@ -53,9 +53,8 @@ for i in range(1, (epoch + 1)):
 #tf.saved_model.simple_save(sess, "./models",
 #                           inputs = {"x": X_data },
 #                           outputs = {"y": y_target})
-saver_new = tf.train.Saver()
 input_x=tf.saved_model.utils.build_tensor_info(X_data)
-output_y=tf.saved_model.utils.build_tensor_info(y_target)
+output_y=tf.saved_model.utils.build_tensor_info(final_output)
 
 predict_iris=(
         tf.saved_model.signature_def_utils.build_signature_def(
