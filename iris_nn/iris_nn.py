@@ -9,6 +9,7 @@ np.random.seed(seed)
 dataset = pd.read_csv("Iris_Dataset.csv")
 dataset = pd.get_dummies(dataset, columns=['Species']) # One Hot Encoding
 values = list(dataset.columns.values)
+labels = values[-3:]
 y = dataset[values[-3:]]
 y = np.array(y, dtype='float32')
 X = dataset[values[1:-3]]
@@ -41,6 +42,16 @@ final_output = tf.nn.softmax(tf.add(tf.matmul(hidden_output, w2), b2))
 loss = tf.reduce_mean(-tf.reduce_sum(y_target * tf.log(final_output), axis=0))
 optimizer = tf.train.GradientDescentOptimizer(learning_rate=0.001).minimize(loss)
 
+class_tensor = tf.constant(labels)
+table = tf.contrib.lookup.index_to_string_table_from_tensor(class_tensor, default_value="UNKNOWN")
+
+table_init = tf.tables_initializer()
+sess.run(table_init)
+
+values, indices = tf.nn.top_k(final_output, 3)
+indices = tf.cast(indices, tf.int64)
+classes = table.lookup(indices)
+
 init = tf.global_variables_initializer()
 sess.run(init)
 
@@ -54,12 +65,14 @@ for i in range(1, (epoch + 1)):
 #                           inputs = {"x": X_data },
 #                           outputs = {"y": y_target})
 input_x=tf.saved_model.utils.build_tensor_info(X_data)
-output_y=tf.saved_model.utils.build_tensor_info(final_output)
+output_y=tf.saved_model.utils.build_tensor_info(classes)
+output_z=tf.saved_model.utils.build_tensor_info(values)
+#prediction=tf.argmax(final_output, 1)
 
 predict_iris=(
         tf.saved_model.signature_def_utils.build_signature_def(
         inputs={'x': input_x},
-        outputs={'y':output_y},
+        outputs={'y':output_y, "z": output_z},
         method_name=tf.saved_model.signature_constants.CLASSIFY_METHOD_NAME)
 )
 builder=tf.saved_model.builder.SavedModelBuilder("./modelsv2")
@@ -67,7 +80,8 @@ builder.add_meta_graph_and_variables(
         sess,[tf.saved_model.tag_constants.SERVING],
         signature_def_map={
              "predict_iris":predict_iris,
-        })
+        },
+        legacy_init_op=tf.saved_model.main_op.main_op())
 builder.save()      
 """
 # Prediction
