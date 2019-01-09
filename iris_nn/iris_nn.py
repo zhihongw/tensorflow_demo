@@ -70,9 +70,12 @@ output_z=tf.saved_model.utils.build_tensor_info(values)
 #prediction=tf.argmax(final_output, 1)
 
 predict_iris=(
-        tf.saved_model.signature_def_utils.build_signature_def(
+        tf.saved_model.signature_def_utils.build_signature_def(    
         inputs={'x': input_x},
-        outputs={'y':output_y, "z": output_z},
+        outputs={
+            tf.saved_model.signature_constants.CLASSIFY_OUTPUT_CLASSES:output_y,
+            tf.saved_model.signature_constants.CLASSIFY_OUTPUT_SCORES:output_z, 
+        },
         method_name=tf.saved_model.signature_constants.CLASSIFY_METHOD_NAME)
 )
 builder=tf.saved_model.builder.SavedModelBuilder("./modelsv2")
