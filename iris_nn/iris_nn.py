@@ -27,7 +27,7 @@ sess = tf.Session()
 interval = 50
 epoch = 500
 
-X_data = tf.placeholder(shape=[None, 4], dtype="float32")
+X_data = tf.placeholder(shape=[None, 4], dtype="float32", name="x")
 y_target = tf.placeholder(shape=[None, 3], dtype="float32")
 
 hidden_layer_nodes = 8
@@ -71,18 +71,29 @@ output_z=tf.saved_model.utils.build_tensor_info(values)
 
 predict_iris=(
         tf.saved_model.signature_def_utils.build_signature_def(    
-        inputs={'x': input_x},
+        inputs={
+              tf.saved_model.signature_constants.CLASSIFY_INPUTS:input_x,
+        },
+
         outputs={
             tf.saved_model.signature_constants.CLASSIFY_OUTPUT_CLASSES:output_y,
             tf.saved_model.signature_constants.CLASSIFY_OUTPUT_SCORES:output_z, 
         },
         method_name=tf.saved_model.signature_constants.CLASSIFY_METHOD_NAME)
 )
+
+prediction_signature = (
+    tf.saved_model.signature_def_utils.build_signature_def(
+            inputs={'inputs': input_x},
+            outputs={'scores': output_z},
+            method_name=tf.saved_model.signature_constants.PREDICT_METHOD_NAME))
+
 builder=tf.saved_model.builder.SavedModelBuilder("./modelsv2")
 builder.add_meta_graph_and_variables(
         sess,[tf.saved_model.tag_constants.SERVING],
         signature_def_map={
              "predict_iris":predict_iris,
+             'predict_click':prediction_signature,
         },
         legacy_init_op=tf.saved_model.main_op.main_op())
 builder.save()      
