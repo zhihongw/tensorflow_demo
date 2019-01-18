@@ -27,7 +27,12 @@ sess = tf.Session()
 interval = 50
 epoch = 500
 
-X_data = tf.placeholder(shape=[None, 4], dtype="float32", name="x")
+serialized_tf_example = tf.placeholder(tf.string, name='tf_example')
+feature_configs = {'X_data': tf.FixedLenFeature(shape=[4], dtype=tf.float32),}
+tf_example = tf.parse_example(serialized_tf_example, feature_configs)
+X_data = tf.identity(tf_example['X_data'], name='X_data')  # use tf.identity() to assign name
+#X_data = tf.placeholder(shape=[None, 4], dtype="float32", name="x")
+
 y_target = tf.placeholder(shape=[None, 3], dtype="float32")
 
 hidden_layer_nodes = 8
@@ -64,7 +69,7 @@ for i in range(1, (epoch + 1)):
 #tf.saved_model.simple_save(sess, "./models",
 #                           inputs = {"x": X_data },
 #                           outputs = {"y": y_target})
-input_x=tf.saved_model.utils.build_tensor_info(X_data)
+input_x=tf.saved_model.utils.build_tensor_info(serialized_tf_example)
 output_y=tf.saved_model.utils.build_tensor_info(classes)
 output_z=tf.saved_model.utils.build_tensor_info(values)
 #prediction=tf.argmax(final_output, 1)
@@ -88,13 +93,15 @@ prediction_signature = (
             outputs={'scores': output_z},
             method_name=tf.saved_model.signature_constants.PREDICT_METHOD_NAME))
 
-builder=tf.saved_model.builder.SavedModelBuilder("./modelsv2")
+builder=tf.saved_model.builder.SavedModelBuilder("./modelsv2/1")
 builder.add_meta_graph_and_variables(
         sess,[tf.saved_model.tag_constants.SERVING],
         signature_def_map={
              "predict_iris":predict_iris,
              'predict_click':prediction_signature,
         },
+        main_op=tf.tables_initializer(),
+        strip_default_attrs=True,
         legacy_init_op=tf.saved_model.main_op.main_op())
 builder.save()      
 """

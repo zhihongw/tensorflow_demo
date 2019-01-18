@@ -1,3 +1,5 @@
  saved_model_cli run --dir modelsv2 --tag_set serve --signature_def predict_iris --input_exprs "x=[[4.4,2.9,1.4,0.2]]"
  saved_model_cli show --dir modelsv2 --tag_set serve --signature_def predict_iris
+/usr/bin/tensorflow_model_server --rest_api_port=8888 --model_name="iris_demo" --model_base_path="/home/zhihongw/git/tensorflow_demo/iris_nn/modelsv2"
+curl -X POST http://localhost:8888/v1/models/iris_demo:classify -d '{"signature_name":"predict_iris","examples":[{"inputs": [4.4,2.9,1.4,0.2]}]}'
 
